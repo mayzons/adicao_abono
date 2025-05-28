@@ -1,0 +1,33 @@
+# UTF-8 encoding
+#
+# Arquivo de versão para PyInstaller
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 0, 0, 0),  # Versão do arquivo
+    prodvers=(1, 0, 0, 0),  # Versão do produto
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        u'040904B0',  # Código de idioma e página de caracteres (Português-Brasil)
+        [
+          StringStruct(u'CompanyName', u'Mayzon - MCS Corp Ltda'),  # Nome do Fabricante
+          StringStruct(u'FileDescription', u'Rotina Expurgos Domingos'),  # Descrição do arquivo
+          StringStruct(u'FileVersion', u'1.0.0.0'),  # Versão do Arquivo
+          StringStruct(u'InternalName', u'RotinaExpurgos'),  # Nome interno do arquivo
+          StringStruct(u'LegalCopyright', u'© 2025 Mayzon - MCS Corp. Todos os direitos reservados.'),  # Direitos Autorais
+          StringStruct(u'OriginalFilename', u'rotina_expurgps.exe'),  # Nome original do arquivo
+          StringStruct(u'ProductName', u'RotinaExpurgos'),  # Nome do Produto
+          StringStruct(u'ProductVersion', u'1.0.0.0')  # Versão do Produto
+        ]
+      )
+    ]),
+    VarFileInfo([VarStruct(u'Translation', [0x0416, 1200])])  # Definição de idioma
+  ]
+)

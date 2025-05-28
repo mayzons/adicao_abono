@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import configparser
 import openpyxl
 from collections import Counter
+from logs_escrita import (log_info, log_warning, log_debug,  log_error) # noqa
 
 # Defini versão
 usuario = os.getlogin()
@@ -22,6 +23,7 @@ lista_opc = []
 lista_s_trn = []
 expurgo_final = []
 
+
 # Caminho do Parser
 def get_app_and_settings_full_path():
     if getattr(sys, 'frozen', False):
@@ -29,7 +31,8 @@ def get_app_and_settings_full_path():
     else:
         BASE_PATH = os.path.dirname(os.path.abspath(__file__))
     return BASE_PATH, os.path.join(BASE_PATH, "Config.ini")
- 
+
+
 CAM_LOGS_LOGS, CAM_CONFIG_PARSER = get_app_and_settings_full_path()
 
 # Criar objeto do configparser
@@ -50,36 +53,42 @@ CON_DSN = config[ambiente]["dsn"]
 CON_PORT = config[ambiente]["port"]
 CON_SERVICE = config[ambiente]["service"]
 
+print(LOG_ESCRITA)
+
 
 def opc_dados():
-    #Carrega a Planilha
+    # Carrega a Planilha
     workbook = openpyxl.load_workbook(ARQ_OPC)
     sheet = workbook["Page 1"]
     sheet = workbook.active
 
     # Acessando os dados
-    for row in sheet.iter_rows(min_row=0, max_row=sheet.max_row, min_col=1, max_col=16):
+    for row in sheet.iter_rows(min_row=0, max_row=sheet.max_row, min_col=1, max_col=16): # type: ignore # noqa
         codigo = row[0].value
-        servico =row[15].value
-        
+        servico = row[15].value
+
         if servico == "Abastece":
             lista_remover = [" - V4 NUC", " - SPP", " - 3"]
             for item in lista_remover:
-                codigo = codigo.replace(item, "")
-            lista_opc.append(codigo)
-    
+                codigo = codigo.replace(item, "")  # type: ignore
+            lista_opc.append(codigo)  # type: ignore
+
     workbook.close()
+
+    if LOG_ESCRITA == 'Sim':
+        msg_log = f'O OPC foi carregado com sucesso, {len(lista_opc)} postos.'
+        log_info(msg_log)
 
     # print(nova_lista)
 
     # Salva a planilha
-    workbook = openpyxl.Workbook()
+    workbook = openpyxl.Workbook()  # type: ignore
     sheet = workbook.active
-    workbook.title = "Page 1"
+    workbook.title = "Page 1"  # type: ignore
 
     # Escreve os postos em outra lista
     for inx, valor in enumerate(lista_opc, start=1):
-        sheet.cell(row=inx, column=1, value=valor)
+        sheet.cell(row=inx, column=1, value=valor)  # type: ignore
 
     workbook.save('files\\Resultado.xlsx')
     print('Concluído!')
@@ -92,24 +101,25 @@ def executa():
     # Dados da conexão
     # username = "mayzon_santos"
     # senha = "F531281887m04"
-    conec = f'{CON_DSN}:{CON_PORT}/{CON_SERVICE}'  # Exemplo: "localhost:1521/XEPDB1"
+    # conec = f'{CON_DSN}:{CON_PORT}/{CON_SERVICE}'
 
     # Conexão em modo Thin (sem Instant Client)
     conn = oracledb.connect(
         user=USERNAME,
         password=SENHA,
-        dsn=f'{CON_DSN}:{CON_PORT}/{CON_SERVICE}'  # Exemplo: "localhost:1521/XEPDB1"
+        dsn=f'{CON_DSN}:{CON_PORT}/{CON_SERVICE}'
     )
 
     resultado = conn.cursor()
 
     sql = """
-    SELECT TB0008_CD_CONVENIADO AS Postos, 
-        TO_CHAR(tb0153_dt_transacao, 'YYYY-MM-DD') AS domingo, 
+    SELECT TB0008_CD_CONVENIADO AS Postos,
+        TO_CHAR(tb0153_dt_transacao, 'YYYY-MM-DD') AS domingo,
         COUNT(*) AS quantidade_registros
     FROM tb0153_transacaoconveniado
     WHERE tb0153_dt_transacao >= TRUNC(SYSDATE, 'IW') - 21
-    AND TO_CHAR(tb0153_dt_transacao, 'DY', 'NLS_DATE_LANGUAGE=PORTUGUESE') = 'DOM'
+    AND TO_CHAR(
+    tb0153_dt_transacao, 'DY', 'NLS_DATE_LANGUAGE=PORTUGUESE') = 'DOM'
     AND tb0138_cd_produto = '1'
     GROUP BY TB0008_CD_CONVENIADO, TO_CHAR(tb0153_dt_transacao, 'YYYY-MM-DD')
     ORDER BY domingo DESC
@@ -120,34 +130,23 @@ def executa():
     for cod, data_tr, qtd in resultado:
         # print(f"Posto: {cod}, Data: {data_tr}, Quantidade: {qtd}")
         lista_trn.append(cod)
-    
+
     resultado.close()
     conn.close()
 
     workbook = openpyxl.Workbook()
     sheet = workbook.active
-    workbook.title = 'trn'
+    workbook.title = 'trn'  # type: ignore
 
     for inx, valor in enumerate(lista_trn, start=1):
-        sheet.cell(row=inx, column=1, value=valor)
+        sheet.cell(row=inx, column=1, value=valor)  # type: ignore
 
     workbook.save('files\\trn.xlsx')
 
+    if LOG_ESCRITA == 'Sim':
+        msg_log = f'As transações foram carregadas com sucesso, {len(lista_trn)} postos.' # noqa
+        log_info(msg_log)
 
-# Valida o dia da semana
-def dia_da_semana():
-    if dia == 0:  # Se for domingo
-        executa()
-        opc_dados()
-        gera_expurgo()
-        print(f"Hoje é segunda", {dia})
-        # Chama LOG aqui
-
-        return True
-    else:
-        print(f"Hoje não é segunda", {dia})
-        # Chama LOG aqui
-        return False
 
 def gera_expurgo():
     global lista_opc, lista_trn, lista_s_trn, expurgo_final
@@ -161,7 +160,7 @@ def gera_expurgo():
         quantidade = contagem_domingo.get(codigo_uni, 0)
         if quantidade == 0:
             lista_s_trn.append(int(codigo_uni))
-    
+
     # Adiciona info
     for i in lista_s_trn:
         expurgo_final.append((i, "Não", ontem, "Sim"))
@@ -170,18 +169,45 @@ def gera_expurgo():
     print(ARQ_EXP)
     workbook = openpyxl.load_workbook(ARQ_EXP)
     sheet = workbook.active
-    sheet.title = "Abono"
-    
-    l_inicial = sheet.max_row + 1
+    sheet.title = "Abono"  # type: ignore
+
+    l_inicial = sheet.max_row + 1  # type: ignore
     for i, linha in enumerate(expurgo_final, start=l_inicial):
         for j, valor in enumerate(linha, start=1):
-            sheet.cell(row=i, column=j, value=valor)
+            sheet.cell(row=i, column=j, value=valor)  # type: ignore
 
     workbook.save(ARQ_EXP)
 
-executa()
-opc_dados()
-gera_expurgo()
+    if LOG_ESCRITA == 'Sim':
+        msg_log = f'Os abonos foram adicionados com sucesso a planilha, {ARQ_EXP}.' # noqa
+        log_info(msg_log)
 
 
+# Valida o dia da semana
+def dia_da_semana():
+    if dia == 0:  # Se for domingo
+        if LOG_ESCRITA == 'Sim':
+            msg_log = f'A rotina de criação de expurgos iniciou' # noqa
+            log_info(msg_log)
 
+        executa()
+        opc_dados()
+        gera_expurgo()
+        print(f"Hoje é segunda, {dia}")
+
+        if LOG_ESCRITA == 'Sim':
+            msg_log = f'A rotina de criação de expurgos concluíu!' # noqa
+            log_info(msg_log)
+
+        return True
+    else:
+        if LOG_ESCRITA == 'Sim':
+            msg_log = f'A rotina não executará hoje, programado para Segunda!' # noqa
+            log_info(msg_log)
+
+        print(f"Hoje não é segunda, {dia}")
+        return False
+
+
+if __name__ == "__main__":
+    dia_da_semana()

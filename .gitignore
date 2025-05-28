@@ -138,7 +138,8 @@ GitHub.sublime-settings
 .history
 
 # Adiciondos por My
-/files/
 manipula_txt/
 Config.ini
 /instantclient_23_8/
+/dados/
+/build/
