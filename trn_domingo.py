@@ -97,14 +97,9 @@ def opc_dados():
 
 def executa():
     # Ativa o modo de compatibilidade com cliente leve (sem Instant Client)
-    oracledb.init_oracle_client(lib_dir="instantclient_23_8")  # Se necessário
+    if not oracledb.is_thin_mode():
+        oracledb.init_oracle_client(lib_dir="instantclient_23_8")
 
-    # Dados da conexão
-    # username = "mayzon_santos"
-    # senha = "F531281887m04"
-    # conec = f'{CON_DSN}:{CON_PORT}/{CON_SERVICE}'
-
-    # Conexão em modo Thin (sem Instant Client)
     conn = oracledb.connect(
         user=USERNAME,
         password=SENHA,
