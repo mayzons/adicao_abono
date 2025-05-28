@@ -18,6 +18,7 @@ dia = hoje.weekday()  # 0=segunda, 6=domingo
 ontem = hoje - timedelta(days=1)
 ontem = ontem.strftime('%d/%m/%Y')
 
+
 lista_trn = []
 lista_opc = []
 lista_s_trn = []
@@ -34,6 +35,7 @@ def get_app_and_settings_full_path():
 
 
 CAM_LOGS_LOGS, CAM_CONFIG_PARSER = get_app_and_settings_full_path()
+CAMINHO_LOGS = f'{CAM_LOGS_LOGS}\\DADOS'
 
 # Criar objeto do configparser
 config = configparser.ConfigParser()
@@ -52,8 +54,7 @@ SENHA = config[ambiente]["password"]
 CON_DSN = config[ambiente]["dsn"]
 CON_PORT = config[ambiente]["port"]
 CON_SERVICE = config[ambiente]["service"]
-
-print(LOG_ESCRITA)
+DIAEXECU = config[ambiente]["dia"]
 
 
 def opc_dados():
@@ -90,7 +91,7 @@ def opc_dados():
     for inx, valor in enumerate(lista_opc, start=1):
         sheet.cell(row=inx, column=1, value=valor)  # type: ignore
 
-    workbook.save('files\\Resultado.xlsx')
+    workbook.save(f'{CAMINHO_LOGS}\\OPC_{nm_log_data}.xlsx')
     print('Concluído!')
 
 
@@ -141,7 +142,7 @@ def executa():
     for inx, valor in enumerate(lista_trn, start=1):
         sheet.cell(row=inx, column=1, value=valor)  # type: ignore
 
-    workbook.save('files\\trn.xlsx')
+    workbook.save(f'{CAMINHO_LOGS}\\TRN_{nm_log_data}.xlsx')
 
     if LOG_ESCRITA == 'Sim':
         msg_log = f'As transações foram carregadas com sucesso, {len(lista_trn)} postos.' # noqa
@@ -168,8 +169,7 @@ def gera_expurgo():
 
     print(ARQ_EXP)
     workbook = openpyxl.load_workbook(ARQ_EXP)
-    sheet = workbook.active
-    sheet.title = "Abono"  # type: ignore
+    sheet = workbook["Abono"]
 
     l_inicial = sheet.max_row + 1  # type: ignore
     for i, linha in enumerate(expurgo_final, start=l_inicial):
@@ -185,7 +185,7 @@ def gera_expurgo():
 
 # Valida o dia da semana
 def dia_da_semana():
-    if dia == 0:  # Se for domingo
+    if dia == int(DIAEXECU):  # Se for domingo
         if LOG_ESCRITA == 'Sim':
             msg_log = f'A rotina de criação de expurgos iniciou' # noqa
             log_info(msg_log)
