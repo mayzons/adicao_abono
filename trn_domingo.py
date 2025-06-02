@@ -1,4 +1,4 @@
-import oracledb
+import cx_Oracle
 import os
 import sys
 from datetime import datetime, timedelta
@@ -55,6 +55,7 @@ CON_DSN = config[ambiente]["dsn"]
 CON_PORT = config[ambiente]["port"]
 CON_SERVICE = config[ambiente]["service"]
 DIAEXECU = config[ambiente]["dia"]
+ORACLE_HOME = config[ambiente]["oracle_home"]
 
 
 def opc_dados():
@@ -97,16 +98,41 @@ def opc_dados():
 
 def executa():
     # Ativa o modo de compatibilidade com cliente leve (sem Instant Client)
-    if not oracledb.is_thin_mode():
-        oracledb.init_oracle_client(lib_dir="instantclient_23_8")
+    # base_path = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else __file__) # noqa
+    # client_path = os.path.join(base_path, "instantclient_23_8")
+    # oracledb.init_oracle_client(lib_dir=client_path)
 
-    conn = oracledb.connect(
-        user=USERNAME,
-        password=SENHA,
-        dsn=f'{CON_DSN}:{CON_PORT}/{CON_SERVICE}'
-    )
+    # conn = oracledb.connect(
+    #     user=USERNAME,
+    #     password=SENHA,
+    #     dsn=f'{CON_DSN}:{CON_PORT}/{CON_SERVICE}'
+    # )
+    # cx_Oracle.init_oracle_client(lib_dir=client_path)
+    # path = os.getcwd()
 
-    resultado = conn.cursor()
+    # # Caminho para a pasta do Oracle Instant Client
+    # oracle_instant_client_dir = path + "\\instantclient_21_18"
+
+    oracle_instant_client_dir = ORACLE_HOME
+    # # Adicione o caminho do Oracle Instant Client ao PATH
+    os.environ["PATH"] = f"{oracle_instant_client_dir};{os.environ['PATH']}"
+
+    # Verifique se a biblioteca do cliente Oracle já foi inicializada
+    if not cx_Oracle.clientversion():
+        cx_Oracle.init_oracle_client(lib_dir=oracle_instant_client_dir)
+
+    def conexaoDB():
+        conn = cx_Oracle.connect(
+            user=USERNAME,
+            password=SENHA,
+            dsn=f'{CON_DSN}:{CON_PORT}/{CON_SERVICE}'
+        )
+
+        return conn
+
+    conexao = conexaoDB()
+
+    resultado = conexao.cursor()
 
     sql = """
     SELECT TB0008_CD_CONVENIADO AS Postos,
@@ -128,7 +154,6 @@ def executa():
         lista_trn.append(cod)
 
     resultado.close()
-    conn.close()
 
     workbook = openpyxl.Workbook()
     sheet = workbook.active

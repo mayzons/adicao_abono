@@ -1,2 +1,5 @@
 # Para compilar os arquivos com pyinstaller, usando os dados do version-info.txt
 pyinstaller --name="Rotina_Files" --noconfirm --onefile --icon="files/icone.ico" --version-file="files/version_info.txt" --noconsole --clean --log-level=WARN  main.py
+
+
+pyinstaller --name="Rotina_Expurgos" --noconfirm --onefile --icon="files/icone.ico" --version-file="files/version_info.txt" --noconsole --clean --log-level=WARN --add-data="instantclient_23_8;instantclient_23_8" --hidden-import=cx_Oracle trn_domingo.py 
